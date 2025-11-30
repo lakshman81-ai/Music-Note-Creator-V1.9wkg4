@@ -14,7 +14,7 @@
     "react": "^19.2.0",
     "d3": "^7.9.0",
     "vexflow": "^4.2.3",
-    "@google/genai": "^0.1.0"
+    "@google/genai": "^1.30.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
