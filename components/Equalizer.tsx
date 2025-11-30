@@ -1,3 +1,5 @@
+
+
 import React, { useEffect, useRef } from 'react';
 import { audioEngine } from '../services/audioEngine';
 import { formatPitch } from '../utils/pitchUtils';
@@ -24,7 +26,7 @@ const Equalizer: React.FC<EqualizerProps> = ({ isPlaying }) => {
     if (!ctx) return;
 
     // Get real frequency data
-    const data = audioEngine.getFrequencyData(undefined);
+    const data = audioEngine.getFrequencyData();
     const width = canvas.width;
     const height = canvas.height;
     const sampleRate = audioEngine.sampleRate;

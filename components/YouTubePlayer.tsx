@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useRef } from 'react';
 
 interface YouTubePlayerProps {
@@ -42,11 +43,11 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
         
         window.onYouTubeIframeAPIReady = initPlayer;
       } else {
-        initPlayer(undefined);
+        initPlayer();
       }
     };
 
-    const initPlayer = (_?: any) => {
+    const initPlayer = () => {
       if (!containerRef.current) return;
       
       // If player exists, just cue new video

@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import { NoteEvent, AudioState, HistoryEntry, LabelSettings } from './types';
 import { PlayIcon, PauseIcon, UploadIcon, SettingsIcon, DownloadIcon, MusicIcon, HistoryIcon, TrashIcon, ActivityIcon, SegmentIcon, NextIcon, ChevronLeftIcon, ChevronRightIcon, MinusIcon, PlusIcon, LightBulbIcon, RefreshIcon } from './components/Icons';
@@ -324,7 +325,7 @@ const App: React.FC = () => {
     audioEngine.stopAllTones(); // Force silence active notes
   };
 
-  const resetSession = (_?: any) => {
+  const resetSession = () => {
       stopSequencer();
       audioEngine.stopAllTones();
       setNotes([]);
@@ -460,7 +461,7 @@ const App: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       showToast("Loading and decoding audio...", "loading");
-      resetSession(undefined); 
+      resetSession(); 
       
       try {
         // Decode audio data for analysis
@@ -496,7 +497,7 @@ const App: React.FC = () => {
         showToast("Invalid YouTube URL", "error");
         return;
     }
-    resetSession(undefined);
+    resetSession();
     showToast("Loading Music...", "loading");
     setYtVideoId(id);
     setAudioCrossOrigin('anonymous');

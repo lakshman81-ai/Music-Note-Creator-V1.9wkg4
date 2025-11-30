@@ -1,4 +1,5 @@
 
+
 import { RhythmPattern } from '../components/constants';
 import { NoteEvent } from '../types';
 
@@ -123,7 +124,7 @@ export class AudioEngine {
     }
   }
 
-  getFrequencyData(_?: any): Uint8Array {
+  getFrequencyData(): Uint8Array {
     if (!this.analyser || !this.dataArray) return new Uint8Array(64);
     this.analyser.getByteFrequencyData(this.dataArray);
     return this.dataArray;

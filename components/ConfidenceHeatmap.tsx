@@ -28,7 +28,7 @@ const ConfidenceHeatmap: React.FC<HeatmapProps> = ({ notes, currentTime = 0, tot
   // Sync scroll with playhead
   useEffect(() => {
     if (scrollRef && scrollRef.current) {
-      // 60px is the same offset PADDING used in SheetMusic for alignment + margin
+      // 120px is the left margin offset
       const offset = 120; 
       const playheadX = offset + (currentTime * PIXELS_PER_SECOND);
       const containerWidth = scrollRef.current.clientWidth;
@@ -80,9 +80,11 @@ const ConfidenceHeatmap: React.FC<HeatmapProps> = ({ notes, currentTime = 0, tot
   const domainMin = Math.floor(minPitch) - 2;
   const domainMax = Math.ceil(maxPitch) + 2;
 
-  // Layout Calculations to match SheetMusic
-  // SheetMusic uses: PADDING_LEFT (60) + 60 + (time * 80)
-  const chartWidth = Math.max(1000, 120 + (Math.max(1, totalDuration) * PIXELS_PER_SECOND));
+  // Layout Calculations to match Timeline Overlay
+  // Chart needs to be wide enough so that 1s = PIXELS_PER_SECOND
+  // Margin Left: 120, Margin Right: 20
+  // Inner Width = totalDuration * PIXELS_PER_SECOND
+  const chartWidth = 120 + (Math.max(1, totalDuration) * PIXELS_PER_SECOND) + 20;
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -192,7 +194,7 @@ const ConfidenceHeatmap: React.FC<HeatmapProps> = ({ notes, currentTime = 0, tot
             <div 
                 className="absolute top-0 bottom-0 z-10 transition-all duration-75 ease-linear pointer-events-none"
                 style={{ 
-                    // Matches SheetMusic offset: PADDING_LEFT (60) + extra offset (60)
+                    // Matches Chart margin-left (120)
                     left: `${120 + (currentTime * PIXELS_PER_SECOND)}px`,
                 }}
             >

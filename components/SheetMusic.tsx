@@ -1,9 +1,8 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import * as Vex from 'vexflow';
 import { NoteEvent, LabelSettings } from '../types';
 import { MusicNotationService } from '../services/musicNotationService';
-import { PIXELS_PER_SECOND } from './constants';
 
 interface SheetMusicProps {
   notes: NoteEvent[];
@@ -30,10 +29,6 @@ const SheetMusic: React.FC<SheetMusicProps> = ({
   // Logic: Sync scroll to playhead
   useEffect(() => {
     if (scrollRef && scrollRef.current) {
-        // Beats per second = BPM / 60
-        // Playhead Beat = currentTime * (BPM/60)
-        // Pixels = Playhead Beat * (MEASURE_WIDTH / 4)  [assuming 4/4]
-        
         const beatsPerSecond = bpm / 60;
         const currentBeat = currentTime * beatsPerSecond;
         const pixelsPerBeat = MEASURE_WIDTH / 4;
@@ -44,6 +39,7 @@ const SheetMusic: React.FC<SheetMusicProps> = ({
         const containerWidth = scrollRef.current.clientWidth;
         const targetScroll = playheadX - (containerWidth / 2);
         
+        // Only scroll if deviation is significant to allow manual scrolling
         if (Math.abs(scrollRef.current.scrollLeft - targetScroll) > 50) { 
            scrollRef.current.scrollTo({
                left: Math.max(0, targetScroll),
@@ -209,20 +205,16 @@ const SheetMusic: React.FC<SheetMusicProps> = ({
           currentX += MEASURE_WIDTH;
       });
       
-      // Draw Playhead Overlay (Manual SVG on top of VexFlow)
+  }, [notes, bpm, labelSettings, selectedNoteId]);
+
+  // Calculate Cursor Position directly for smooth updates
+  const cursorLeft = useMemo(() => {
       const beatsPerSecond = bpm / 60;
       const currentBeat = currentTime * beatsPerSecond;
-      const pixelsPerBeat = MEASURE_WIDTH / 4;
-      const playheadX = 10 + 20 + (currentBeat * pixelsPerBeat); // 10 margin + 20 padding
-
-      context.beginPath();
-      context.moveTo(playheadX, 20);
-      context.lineTo(playheadX, 260);
-      context.setStrokeStyle("#ef4444");
-      context.setLineWidth(1.5);
-      context.stroke();
-
-  }, [notes, bpm, labelSettings, selectedNoteId]);
+      const pixelsPerBeat = MEASURE_WIDTH / 4; 
+      // 10px margin + 20px padding approximation for the start
+      return 30 + (currentBeat * pixelsPerBeat);
+  }, [currentTime, bpm]);
 
   return (
     <div 
@@ -230,7 +222,24 @@ const SheetMusic: React.FC<SheetMusicProps> = ({
         onScroll={onScroll}
         className="w-full h-[320px] overflow-x-auto bg-white rounded-t-lg shadow-sm relative select-none flex"
     >
-        <div ref={containerRef} className="h-full min-w-full bg-white" />
+        {/* Wrapper to hold relative content */}
+        <div className="relative min-h-full min-w-max">
+            {/* VexFlow Container */}
+            <div ref={containerRef} className="h-full bg-white" />
+            
+            {/* Playhead Cursor */}
+            <div 
+                className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 pointer-events-none transition-all duration-75 ease-linear"
+                style={{ 
+                    left: `${cursorLeft}px`,
+                    top: '20px',
+                    height: '260px',
+                    boxShadow: '0 0 4px rgba(239, 68, 68, 0.6)'
+                }}
+            >
+                <div className="absolute -top-1 -left-[3px] w-2 h-2 bg-red-500 rounded-full shadow-md"></div>
+            </div>
+        </div>
     </div>
   );
 };
