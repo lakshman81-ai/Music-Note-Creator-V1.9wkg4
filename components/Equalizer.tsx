@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useRef } from 'react';
 import { audioEngine } from '../services/audioEngine';
 import { formatPitch } from '../utils/pitchUtils';
@@ -10,7 +8,7 @@ interface EqualizerProps {
 
 const Equalizer: React.FC<EqualizerProps> = ({ isPlaying }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | undefined>(undefined);
 
   const getNoteName = (hz: number) => {
     if (hz === 0) return '';

@@ -1,8 +1,7 @@
 
-
 import React, { useState, useRef, useEffect } from 'react';
 import { NoteEvent, AudioState, HistoryEntry, LabelSettings } from './types';
-import { PlayIcon, PauseIcon, UploadIcon, SettingsIcon, DownloadIcon, MusicIcon, HistoryIcon, TrashIcon, ActivityIcon, SegmentIcon, NextIcon, ChevronLeftIcon, ChevronRightIcon, MinusIcon, PlusIcon, LightBulbIcon, RefreshIcon } from './components/Icons';
+import { PlayIcon, PauseIcon, UploadIcon, SettingsIcon, DownloadIcon, MusicIcon, HistoryIcon, TrashIcon, ActivityIcon, SegmentIcon, NextIcon, ChevronLeftIcon, ChevronRightIcon, MinusIcon, PlusIcon, LightBulbIcon, RefreshIcon, PianoIcon, SwatchIcon, StyleIcon } from './components/Icons';
 import Equalizer from './components/Equalizer';
 import SheetMusic from './components/SheetMusic';
 import ConfidenceHeatmap from './components/ConfidenceHeatmap';
@@ -15,7 +14,7 @@ import { audioEngine } from './services/audioEngine';
 import { HistoryService } from './services/historyService';
 import { SuggestionService, SuggestedSettings } from './services/suggestionService';
 import { AITranscription } from './services/aiTranscription';
-import { RHYTHM_PATTERNS, STYLES, VOICES } from './components/constants';
+import { RHYTHM_PATTERNS, STYLES, VOICES, GENRES } from './components/constants';
 
 // --- Deterministic & Composition Engine ---
 
@@ -194,7 +193,7 @@ const App: React.FC = () => {
   // --- Refs ---
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const sequencerRef = useRef<number>();
+  const sequencerRef = useRef<number | undefined>(undefined);
   const lastFrameTimeRef = useRef<number>(0);
   const playbackTimeRef = useRef<number>(0); // Track sequencer time independently of state
   const notesRef = useRef<NoteEvent[]>([]);
@@ -259,6 +258,8 @@ const App: React.FC = () => {
     selectedStyle: 'none'
   });
 
+  const [compositionGenre, setCompositionGenre] = useState('Ballad');
+
   const [segmentDuration, setSegmentDuration] = useState<10 | 20 | 30>(10);
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
   const [processedSegments, setProcessedSegments] = useState<Set<number>>(new Set());
@@ -266,7 +267,7 @@ const App: React.FC = () => {
 
   // Rhythm State
   const [isRhythmPlaying, setIsRhythmPlaying] = useState(false);
-  const [bpm, setBpm] = useState(100);
+  const [bpm, setBpm] = useState(80);
 
   // Suggestion State
   const [suggestedSettings, setSuggestedSettings] = useState<SuggestedSettings | null>(null);
@@ -409,7 +410,7 @@ const App: React.FC = () => {
             const suggestions = SuggestionService.generateSuggestions(newNotes);
             if (suggestions) {
                 setSuggestedSettings(suggestions);
-                setIsSuggestionOpen(true);
+                // setIsSuggestionOpen(true); // Disable automatic suggestion popup
             }
         } catch (e) {
             console.error(e);
@@ -816,7 +817,7 @@ const App: React.FC = () => {
 
       {segmentConfirmationOpen && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in">
-              <div className="bg-zinc-900 border border-zinc-700 p-8 rounded-xl shadow-2xl max-w-md w-full text-center">
+              <div className="bg-zinc-900 border border-zinc-700 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
                   <div className="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
                       <SegmentIcon className="w-8 h-8 text-white" />
                   </div>
@@ -825,13 +826,13 @@ const App: React.FC = () => {
                   <div className="flex gap-3 justify-center">
                       <button 
                         onClick={handleReviewSegment}
-                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition-colors flex items-center gap-2"
+                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-full transition-colors flex items-center gap-2"
                       >
                           <ChevronLeftIcon className="w-4 h-4" /> Review
                       </button>
                       <button 
                         onClick={proceedToNextSegment}
-                        className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg shadow-lg flex items-center gap-2"
+                        className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-full shadow-lg flex items-center gap-2"
                       >
                           Proceed <NextIcon className="w-4 h-4" />
                       </button>
@@ -863,19 +864,19 @@ const App: React.FC = () => {
       <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
+            <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
               <MusicIcon className="text-white w-5 h-5" />
             </div>
             <h1 className="font-bold text-lg tracking-tight text-white">Music Note Creator</h1>
           </div>
           <div className="flex items-center gap-3">
-             <button title="Toggle Note Labels" onClick={() => setLabelSettings(s => ({ ...s, showLabels: !s.showLabels }))} className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium border ${labelSettings.showLabels ? 'bg-indigo-900/30 text-indigo-300 border-indigo-500/30' : 'bg-zinc-800/50 text-zinc-400 border-zinc-700/50'}`}>
+             <button title="Toggle Note Labels" onClick={() => setLabelSettings(s => ({ ...s, showLabels: !s.showLabels }))} className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors text-sm font-medium border ${labelSettings.showLabels ? 'bg-indigo-900/30 text-indigo-300 border-indigo-500/30' : 'bg-zinc-800/50 text-zinc-400 border-zinc-700/50'}`}>
                 <span className="font-bold font-serif italic">ABC</span>
              </button>
-            <button title="Project History" onClick={() => setIsHistoryOpen(true)} className="p-2 text-zinc-400 hover:text-white bg-zinc-800/50 rounded-lg">
+            <button title="Project History" onClick={() => setIsHistoryOpen(true)} className="p-2 text-zinc-400 hover:text-white bg-zinc-800/50 rounded-full hover:bg-zinc-700 transition-colors">
               <HistoryIcon className="w-5 h-5" />
             </button>
-            <button title="Settings" onClick={() => setIsSettingsOpen(true)} className="p-2 text-zinc-400 hover:text-white bg-zinc-800/50 rounded-lg">
+            <button title="Settings" onClick={() => setIsSettingsOpen(true)} className="p-2 text-zinc-400 hover:text-white bg-zinc-800/50 rounded-full hover:bg-zinc-700 transition-colors">
               <SettingsIcon className="w-5 h-5" />
             </button>
           </div>
@@ -888,20 +889,20 @@ const App: React.FC = () => {
         <section className="lg:col-span-4 flex flex-col gap-6">
           
           {/* Audio Source */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 shadow-sm">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-sm">
             <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4">Audio Source</h2>
             
-            <div className="flex p-1 bg-zinc-950 rounded-lg mb-4">
+            <div className="flex p-1 bg-zinc-950 rounded-full mb-4">
               <button 
                 title="Use YouTube Source"
-                className={`flex-1 py-1.5 text-sm rounded-md font-medium transition-all ${audioState.sourceType === 'youtube' ? 'bg-zinc-800 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}
+                className={`flex-1 py-1.5 text-sm rounded-full font-medium transition-all ${audioState.sourceType === 'youtube' ? 'bg-zinc-800 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}
                 onClick={() => setAudioState(prev => ({ ...prev, sourceType: 'youtube' }))}
               >
                 YouTube
               </button>
               <button 
                 title="Upload Audio File"
-                className={`flex-1 py-1.5 text-sm rounded-md font-medium transition-all ${audioState.sourceType === 'file' ? 'bg-zinc-800 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}
+                className={`flex-1 py-1.5 text-sm rounded-full font-medium transition-all ${audioState.sourceType === 'file' ? 'bg-zinc-800 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}
                 onClick={() => setAudioState(prev => ({ ...prev, sourceType: 'file' }))}
               >
                 Upload
@@ -914,14 +915,14 @@ const App: React.FC = () => {
                     <input 
                       type="text" 
                       placeholder="Paste YouTube URL..." 
-                      className="flex-1 bg-zinc-950 border border-zinc-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-white"
+                      className="flex-1 bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-white"
                       value={ytUrl}
                       onChange={(e) => setYtUrl(e.target.value)}
                     />
                     <button 
                         onClick={handleYoutubeLoad}
                         disabled={isProcessing}
-                        className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-3 py-2 rounded-md transition-colors"
+                        className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-3 py-2 rounded-lg transition-colors"
                         title="Load Video"
                     >
                         {isProcessing || (!isPlayerReady && ytVideoId && !isRestricted) ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <DownloadIcon className="w-4 h-4" />}
@@ -929,7 +930,7 @@ const App: React.FC = () => {
                   </div>
               </div>
             ) : (
-              <div title="Click to upload audio file" onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-zinc-700 hover:border-indigo-500 hover:bg-zinc-800/50 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-all group mb-4">
+              <div title="Click to upload audio file" onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-zinc-700 hover:border-indigo-500 hover:bg-zinc-800/50 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all group mb-4">
                 <UploadIcon className="w-8 h-8 text-zinc-500 group-hover:text-indigo-400 mb-2" />
                 <span className="text-sm text-zinc-400 group-hover:text-zinc-200">Upload File</span>
                 <input type="file" ref={fileInputRef} className="hidden" accept="audio/*,.mp3,.mpeg,.wav,.m4a" onChange={handleFileUpload} />
@@ -965,119 +966,157 @@ const App: React.FC = () => {
           </div>
 
           {/* Control & Analysis Panel */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 shadow-sm space-y-6">
-             <div className="flex justify-between items-center">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-0 overflow-hidden shadow-sm flex flex-col">
+             
+             {/* Header */}
+             <div className="flex justify-between items-center p-4 pb-2 border-b border-zinc-800/50">
                  <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Controls & Analysis</h2>
                  <span className="text-[10px] bg-indigo-900/30 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-500/20">AI Enhanced</span>
              </div>
 
-             {/* Segment Controls */}
-             <div className="space-y-3">
-                 <div className="flex items-center justify-between bg-zinc-950 p-2 rounded-lg border border-zinc-800">
-                     <button onClick={handlePrevSegment} disabled={currentSegmentIndex === 0} className="p-1 hover:text-white text-zinc-500 disabled:opacity-30"><ChevronLeftIcon className="w-5 h-5" /></button>
-                     <div className="text-center">
-                         <span className="block text-[10px] text-zinc-500 uppercase font-bold">Segment</span>
-                         <span className="text-sm font-mono text-zinc-200">{currentSegmentIndex + 1} <span className="text-zinc-600">/ {Math.ceil((audioState.duration || 1)/segmentDuration)}</span></span>
+             <div className="p-4 space-y-4">
+                 
+                 {/* Row 1: Segment Controls */}
+                 <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-1.5 flex items-center justify-between">
+                     {/* Left Arrow */}
+                     <button onClick={handlePrevSegment} disabled={currentSegmentIndex === 0} className="p-1.5 text-zinc-500 hover:text-white disabled:opacity-30 rounded-full hover:bg-zinc-800 transition-colors">
+                        <ChevronLeftIcon className="w-5 h-5" />
+                     </button>
+                     
+                     {/* Text */}
+                     <div className="flex flex-col items-center">
+                          <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest leading-tight">Segment</span>
+                          <div className="flex items-center gap-2 text-sm font-mono text-zinc-300 font-bold">
+                             <span className="text-indigo-400 text-base">{currentSegmentIndex + 1}</span>
+                             <span className="text-zinc-600">/</span>
+                             <span className="text-base">{Math.max(1, Math.ceil((audioState.duration || 1)/segmentDuration))}</span>
+                          </div>
                      </div>
-                     <button onClick={handleNextSegment} className="p-1 hover:text-white text-zinc-500"><ChevronRightIcon className="w-5 h-5" /></button>
+
+                     {/* Right Arrow */}
+                     <button onClick={handleNextSegment} className="p-1.5 text-zinc-500 hover:text-white rounded-full hover:bg-zinc-800 transition-colors">
+                        <ChevronRightIcon className="w-5 h-5" />
+                     </button>
+
+                     {/* Separator */}
+                     <div className="h-8 w-px bg-zinc-800 mx-2"></div>
+
+                     {/* Duration Dropdown */}
+                     <div className="relative min-w-[110px]">
+                          <select 
+                             value={segmentDuration}
+                             onChange={(e) => {
+                                 setSegmentDuration(Number(e.target.value) as any);
+                                 setCurrentSegmentIndex(0);
+                                 setProcessedSegments(new Set());
+                             }}
+                             className="w-full bg-transparent text-sm text-zinc-200 font-medium appearance-none focus:outline-none cursor-pointer text-right pr-4"
+                          >
+                              <option value="10">10s Segments</option>
+                              <option value="20">20s Segments</option>
+                              <option value="30">30s Segments</option>
+                          </select>
+                          <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500 text-[10px]">▼</div>
+                     </div>
                  </div>
 
-                 <div className="flex items-center gap-2">
-                     <select 
-                        value={segmentDuration}
-                        onChange={(e) => {
-                            setSegmentDuration(Number(e.target.value) as any);
-                            setCurrentSegmentIndex(0);
-                            setProcessedSegments(new Set());
-                        }}
-                        className="bg-zinc-950 text-xs border border-zinc-700 rounded px-2 py-1.5 flex-1 focus:ring-indigo-500 focus:border-indigo-500"
-                     >
-                         <option value="10">10s Segments</option>
-                         <option value="20">20s Segments</option>
-                         <option value="30">30s Segments</option>
-                     </select>
+                 {/* Row 2: Voice | Style | BPM */}
+                 <div className="flex gap-2">
+                     {/* Voice */}
+                     <div className="flex-[2] bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col px-3 py-1.5 relative group hover:border-zinc-700 transition-colors min-w-0">
+                         <div className="flex items-center gap-1.5 mb-0.5">
+                            <PianoIcon className="w-3 h-3 text-zinc-500" />
+                            <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Voice</label>
+                         </div>
+                         <select 
+                             value={labelSettings.selectedVoice}
+                             onChange={(e) => setLabelSettings(s => ({ ...s, selectedVoice: e.target.value }))}
+                             className="bg-transparent text-xs text-white font-medium appearance-none w-full focus:outline-none cursor-pointer truncate"
+                         >
+                             {VOICES.map(v => <option key={v.id} value={v.id} className="bg-zinc-900">{v.name}</option>)}
+                         </select>
+                     </div>
+
+                     {/* Style */}
+                     <div className="flex-[2] bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col px-3 py-1.5 relative group hover:border-zinc-700 transition-colors min-w-0">
+                         <div className="flex items-center gap-1.5 mb-0.5">
+                            <SwatchIcon className="w-3 h-3 text-zinc-500" />
+                            <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Style</label>
+                         </div>
+                         <select 
+                             value={compositionGenre}
+                             onChange={(e) => setCompositionGenre(e.target.value)}
+                             className="bg-transparent text-xs text-white font-medium appearance-none w-full focus:outline-none cursor-pointer truncate"
+                         >
+                             {GENRES.map(g => <option key={g} value={g} className="bg-zinc-900">{g}</option>)}
+                         </select>
+                     </div>
+
+                     {/* BPM */}
+                     <div className="w-[60px] bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col px-2 py-1.5 relative group hover:border-zinc-700 transition-colors shrink-0">
+                          <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">BPM</label>
+                          <input 
+                             type="number" 
+                             value={bpm}
+                             onChange={(e) => setBpm(Number(e.target.value))}
+                             className="bg-transparent text-xs text-white font-medium w-full focus:outline-none font-mono"
+                          />
+                     </div>
                  </div>
+
+                 {/* Row 3: Rhythm */}
+                 <div className="flex gap-2">
+                      <div className="flex-[3] bg-zinc-950 border border-zinc-800 rounded-xl flex items-center px-3 py-2 relative group hover:border-zinc-700 transition-colors min-w-0">
+                         <select 
+                             value={labelSettings.selectedStyle}
+                             onChange={(e) => setLabelSettings(s => ({ ...s, selectedStyle: e.target.value }))}
+                             className="bg-transparent text-xs text-zinc-300 w-full focus:outline-none appearance-none cursor-pointer truncate"
+                         >
+                             {STYLES.map(s => <option key={s.id} value={s.id} className="bg-zinc-900">{s.name}</option>)}
+                         </select>
+                         <div className="absolute right-3 pointer-events-none text-zinc-600 text-[10px]">▼</div>
+                      </div>
+                      <button 
+                         onClick={() => setIsRhythmPlaying(!isRhythmPlaying)}
+                         className={`flex-1 px-3 py-2 text-xs font-bold rounded-full border transition-all whitespace-nowrap ${isRhythmPlaying ? 'bg-indigo-900/30 border-indigo-500/30 text-indigo-300' : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700'}`}
+                      >
+                          {isRhythmPlaying ? 'Stop' : 'Play Rhythm'}
+                      </button>
+                 </div>
+
              </div>
 
-             {/* Playback & Rhythm */}
-             <div className="space-y-4 pt-4 border-t border-zinc-800">
-                 <div className="flex items-center justify-between">
-                     <span className="text-xs text-zinc-400 font-medium">Note Player</span>
-                     <div className="flex items-center bg-zinc-950 rounded-lg p-0.5 border border-zinc-800">
-                         <button onClick={() => changeSequencerSpeed(-0.25)} className="px-2 text-zinc-500 hover:text-zinc-300"><MinusIcon className="w-3 h-3" /></button>
-                         <span className="text-xs font-mono w-8 text-center">{sequencerSpeed}x</span>
-                         <button onClick={() => changeSequencerSpeed(0.25)} className="px-2 text-zinc-500 hover:text-zinc-300"><PlusIcon className="w-3 h-3" /></button>
-                     </div>
-                 </div>
-                 
-                 <button
+             {/* Row 4: Bottom Actions Bar */}
+             <div className="mt-auto border-t border-zinc-800 flex items-center justify-between p-3 gap-3">
+                {/* Suggest */}
+                <button 
+                    onClick={handleSuggestSettings}
+                    className="flex-[1] h-9 rounded-full flex items-center justify-center gap-2 text-zinc-400 hover:text-yellow-400 hover:bg-zinc-800/50 transition-colors text-xs font-bold uppercase tracking-wide group"
+                >
+                     <LightBulbIcon className="w-4 h-4 group-hover:text-yellow-400 transition-colors text-yellow-600/70" />
+                     Suggest
+                </button>
+
+                {/* Play Sequence (Main) */}
+                <button 
                     onClick={toggleSegmentSequencer}
                     disabled={isProcessing || !processedSegments.has(currentSegmentIndex)}
-                    className={`w-full py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all ${
-                        isSequencing 
-                        ? 'bg-red-500/10 text-red-400 border border-red-500/50 hover:bg-red-500/20' 
-                        : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-900/20 disabled:opacity-50 disabled:cursor-not-allowed'
-                    }`}
-                 >
-                    {isSequencing ? <PauseIcon className="w-4 h-4 fill-current" /> : <PlayIcon className="w-4 h-4 fill-current" />}
-                    {isSequencing ? "Stop Sequence" : "Play Sequence"}
-                 </button>
+                    className="flex-[2] h-10 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center gap-2 text-sm font-bold shadow-lg transition-all transform active:scale-95"
+                >
+                     {isSequencing ? <PauseIcon className="w-4 h-4 fill-current" /> : <PlayIcon className="w-4 h-4 fill-current" />}
+                     {isSequencing ? "Stop Sequence" : "Play Sequence"}
+                </button>
 
-                 <div className="grid grid-cols-2 gap-2">
-                     <div>
-                         <label className="text-[10px] text-zinc-500 uppercase font-bold">BPM</label>
-                         <input 
-                            type="number" 
-                            value={bpm} 
-                            onChange={(e) => setBpm(Number(e.target.value))}
-                            className="w-full bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-200 mt-1"
-                         />
-                     </div>
-                     <div className="flex items-end">
-                         <button 
-                            onClick={() => setIsRhythmPlaying(!isRhythmPlaying)}
-                            className={`w-full py-1.5 rounded text-xs font-medium border ${isRhythmPlaying ? 'bg-emerald-900/30 border-emerald-500/30 text-emerald-400' : 'bg-zinc-800 border-zinc-700 text-zinc-400'}`}
-                         >
-                             {isRhythmPlaying ? 'Stop Rhythm' : 'Play Rhythm'}
-                         </button>
-                     </div>
-                 </div>
-                 
-                 <div className="grid grid-cols-1 gap-2">
-                     <select 
-                        value={labelSettings.selectedStyle}
-                        onChange={(e) => setLabelSettings(s => ({ ...s, selectedStyle: e.target.value }))}
-                        className="bg-zinc-950 text-xs border border-zinc-800 rounded px-2 py-1.5 w-full text-zinc-400"
-                     >
-                         {STYLES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                     </select>
-                     <select 
-                        value={labelSettings.selectedVoice}
-                        onChange={(e) => setLabelSettings(s => ({ ...s, selectedVoice: e.target.value }))}
-                        className="bg-zinc-950 text-xs border border-zinc-800 rounded px-2 py-1.5 w-full text-zinc-400"
-                     >
-                         {VOICES.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                     </select>
-                 </div>
-             </div>
-
-             {/* Actions */}
-             <div className="flex gap-2 pt-4 border-t border-zinc-800">
-                 <button 
-                    onClick={handleSuggestSettings}
-                    className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors border border-zinc-700"
-                 >
-                     <LightBulbIcon className="w-3.5 h-3.5 text-yellow-500" />
-                     Suggest
-                 </button>
-                 <button 
+                {/* Regenerate */}
+                <button 
                     onClick={handleRegenerate}
-                    className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors border border-zinc-700"
-                 >
-                     <RefreshIcon className="w-3.5 h-3.5" />
+                    className="flex-[1] h-9 rounded-full flex items-center justify-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors text-xs font-bold uppercase tracking-wide"
+                >
+                     <RefreshIcon className="w-4 h-4" />
                      Regenerate
-                 </button>
+                </button>
              </div>
+
           </div>
 
         </section>
@@ -1086,7 +1125,7 @@ const App: React.FC = () => {
         <section className="lg:col-span-8 flex flex-col gap-4 relative">
             
             {/* Note Editor */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-zinc-200 relative">
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-zinc-200 relative">
                 <SheetMusic 
                     notes={notes}
                     currentTime={audioState.currentTime}
@@ -1101,7 +1140,7 @@ const App: React.FC = () => {
             </div>
 
             {/* Analysis Graph */}
-            <div className="rounded-xl overflow-hidden shadow-lg border border-zinc-800 bg-zinc-900">
+            <div className="rounded-2xl overflow-hidden shadow-lg border border-zinc-800 bg-zinc-900">
                 <ConfidenceHeatmap 
                     notes={notes} 
                     currentTime={audioState.currentTime}
@@ -1118,7 +1157,7 @@ const App: React.FC = () => {
 
             {/* Youtube Player Hidden Overlay */}
             {audioState.sourceType === 'youtube' && ytVideoId && (
-                <div className="fixed bottom-6 left-6 w-48 h-28 rounded-lg overflow-hidden shadow-2xl border border-zinc-700 z-50 opacity-90 hover:opacity-100 transition-opacity">
+                <div className="fixed bottom-6 left-6 w-48 h-28 rounded-xl overflow-hidden shadow-2xl border border-zinc-700 z-50 opacity-90 hover:opacity-100 transition-opacity">
                     <YouTubePlayer 
                         videoId={ytVideoId}
                         isPlaying={audioState.isPlaying && !isSequencing}

@@ -1,4 +1,5 @@
 
+
 export const PIXELS_PER_SECOND = 80;
 
 export const VOICES = [
@@ -37,6 +38,16 @@ export const STYLES = [
     { id: 'disco', name: 'Disco', timeSignature: '4/4' },
     { id: 'swing', name: 'Swing', timeSignature: '4/4' },
     { id: 'waltz', name: 'Waltz', timeSignature: '3/4' }
+];
+
+export const GENRES = [
+    'Ballad',
+    'Pop',
+    'Rock',
+    'Jazz',
+    'Classical',
+    'Electronic',
+    'Ambient'
 ];
 
 export interface RhythmPattern {

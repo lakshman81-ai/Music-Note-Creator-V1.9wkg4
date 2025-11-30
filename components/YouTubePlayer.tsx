@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useRef } from 'react';
 
 interface YouTubePlayerProps {
@@ -30,7 +28,7 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
 }) => {
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const timeIntervalRef = useRef<number>();
+  const timeIntervalRef = useRef<number | undefined>(undefined);
 
   // Initialize Player
   useEffect(() => {

@@ -26,6 +26,11 @@ const SheetMusic: React.FC<SheetMusicProps> = ({
   // Constants
   const MEASURE_WIDTH = 250;
   
+  // Memoize measures for rendering efficiency and to use in axis generation
+  const measures = useMemo(() => {
+      return MusicNotationService.processNotes(notes, bpm);
+  }, [notes, bpm]);
+
   // Logic: Sync scroll to playhead
   useEffect(() => {
     if (scrollRef && scrollRef.current) {
@@ -59,12 +64,7 @@ const SheetMusic: React.FC<SheetMusicProps> = ({
           containerRef.current.removeChild(containerRef.current.firstChild);
       }
 
-      // 2. Process Notes into Measures
-      const measures = MusicNotationService.processNotes(notes, bpm);
-      
-      if (measures.length === 0) return;
-
-      // 3. Setup VexFlow Renderer
+      // 2. Setup VexFlow Renderer
       // VexFlow 4.x ESM export handling - Robust Check
       // @ts-ignore
       const VF = Vex.Flow || (Vex.default && Vex.default.Flow) || Vex;
@@ -85,7 +85,7 @@ const SheetMusic: React.FC<SheetMusicProps> = ({
       // Styling
       context.setFont("Inter", 10, "").setBackgroundFillStyle("#ffffff");
 
-      // 4. Render Measures Loop
+      // 3. Render Measures Loop
       let currentX = 10;
       
       measures.forEach((measure, i) => {
@@ -143,9 +143,10 @@ const SheetMusic: React.FC<SheetMusicProps> = ({
                   // Keys: "c/4", "eb/5"
                   const keys = group.map(n => {
                       // MIDI to Note Name
-                      const noteName = n.pitch_label?.replace(/\d+/, '').toLowerCase() || "c";
+                      // Fix: robustly handle unicode pitch labels (e.g. D♯4) by taking first char only
+                      const noteLetter = n.pitch_label?.charAt(0).toLowerCase() || "c";
                       const octave = Math.floor(n.midi_pitch / 12) - 1;
-                      return `${noteName}/${octave}`;
+                      return `${noteLetter}/${octave}`;
                   });
 
                   // Modifiers (Accidentals)
@@ -158,8 +159,16 @@ const SheetMusic: React.FC<SheetMusicProps> = ({
                   // Apply Accidentals
                   group.forEach((n, idx) => {
                       const noteName = n.pitch_label || "";
-                      if (noteName.includes("#")) staveNote.addModifier(new VF.Accidental("#"), idx);
-                      if (noteName.includes("b")) staveNote.addModifier(new VF.Accidental("b"), idx);
+                      // Handle both ASCII and Unicode accidentals
+                      if (noteName.includes("#") || noteName.includes("♯")) {
+                          staveNote.addModifier(new VF.Accidental("#"), idx);
+                      }
+                      if (noteName.includes("b") || noteName.includes("♭")) {
+                          staveNote.addModifier(new VF.Accidental("b"), idx);
+                      }
+                      if (noteName.includes("x")) {
+                          staveNote.addModifier(new VF.Accidental("##"), idx);
+                      }
                   });
 
                   // Pitch Labels (Annotations)
@@ -205,7 +214,7 @@ const SheetMusic: React.FC<SheetMusicProps> = ({
           currentX += MEASURE_WIDTH;
       });
       
-  }, [notes, bpm, labelSettings, selectedNoteId]);
+  }, [measures, bpm, labelSettings, selectedNoteId]);
 
   // Calculate Cursor Position directly for smooth updates
   const cursorLeft = useMemo(() => {
@@ -220,13 +229,33 @@ const SheetMusic: React.FC<SheetMusicProps> = ({
     <div 
         ref={scrollRef}
         onScroll={onScroll}
-        className="w-full h-[320px] overflow-x-auto bg-white rounded-t-lg shadow-sm relative select-none flex"
+        className="w-full h-[320px] overflow-x-auto bg-white rounded-t-2xl shadow-sm relative select-none flex"
     >
         {/* Wrapper to hold relative content */}
         <div className="relative min-h-full min-w-max">
             {/* VexFlow Container */}
             <div ref={containerRef} className="h-full bg-white" />
             
+            {/* Time Axis Overlay */}
+            {measures.length > 0 && (
+                <div className="absolute bottom-0 left-0 w-full h-8 border-t border-zinc-100 pointer-events-none">
+                    {measures.map((m, i) => {
+                        // Measures are 4 beats (4/4 assumed for now)
+                        const secondsPerMeasure = (4 * 60) / bpm;
+                        const time = i * secondsPerMeasure;
+                        const left = 10 + (i * MEASURE_WIDTH); // Matches VexFlow currentX start
+                        return (
+                            <div key={i} className="absolute top-0 flex flex-col items-start h-full" style={{ left: `${left}px` }}>
+                                <div className="h-1.5 w-px bg-zinc-300"></div>
+                                <span className="text-[9px] text-zinc-400 font-mono mt-0.5 -ml-2 select-none">
+                                    {Math.floor(time / 60)}:{(time % 60).toFixed(0).padStart(2, '0')}
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
             {/* Playhead Cursor */}
             <div 
                 className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 pointer-events-none transition-all duration-75 ease-linear"
